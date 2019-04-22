@@ -43,11 +43,11 @@ void main(){
                 str[8] = (time[3] >> 4) + '0'; //“日”
                 str[9] = (time[3]&0x0F) + '0';
                 str[10] = '\0';
-                LcdShowStr(0, 0, str); //显示到液晶的第一行
-                str[0] = (time[5]&0x0F) + '0'; //“星期”
-                str[1] = '\0';
-                LcdShowStr(11, 0, "week");
-                LcdShowStr(15, 0, str); //显示到液晶的第一行
+                LcdShowStr(3, 0, str); //显示到液晶的第一行
+                // str[0] = (time[5]&0x0F) + '0'; //“星期”
+                // str[1] = '\0';
+                // LcdShowStr(11, 0, "week");
+                // LcdShowStr(15, 0, str); //显示到液晶的第一行
                 str[0] = (time[2] >> 4) + '0'; //“时”
                 str[1] = (time[2]&0x0F) + '0';
                 str[2] = ':'; //添加时间分隔符

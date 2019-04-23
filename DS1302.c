@@ -1,8 +1,8 @@
 #include <reg52.h>
 
-sbit DS1302_RST = P2^4; //DS1302使能引脚
-sbit DS1302_SCLK = P2^1; //DS1302的IO引脚
-sbit DS1302_IO = P2^0; //DS1302的通信时钟引脚
+sbit DS1302_SCLK = P2^3; //DS1302的IO引脚
+sbit DS1302_IO = P2^4; //DS1302的通信时钟引脚
+sbit DS1302_RST = P2^5; //DS1302使能引脚
 
 
 /* 发送一个字节到 DS1302 通信总线上 */

@@ -1,10 +1,10 @@
 #include <reg52.h>
 
-#define LCD1602_DB P0
+#define LCD1602_DB P1
 
-sbit LCD1602_RS = P1 ^ 0;
-sbit LCD1602_RW = P1 ^ 1;
-sbit LCD1602_E = P2 ^ 5;
+sbit LCD1602_RS = P2 ^ 0;
+sbit LCD1602_RW = P2 ^ 1;
+sbit LCD1602_E = P2 ^ 2;
 
 /* 等待液晶准备好 */
 void LcdWaitReady()

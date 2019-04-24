@@ -2,11 +2,11 @@
 
 sbit Data=P2^7;   //定义DHT11数据线
 
-extern void InitLcd1602();
+extern void LcdInit();
 extern void LcdShowStr(unsigned char x, unsigned char y, unsigned char *str);
 
 void main(){
     unsigned char test[]="Hello World";
-    InitLcd1602();
+    LcdInit();
     LcdShowStr(0,0,test);
 }

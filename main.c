@@ -14,15 +14,12 @@ void showTime();
 
 void main()
 {
-
     EA = 1;          //开总中断
     ConfigTimer0(1); //T0 定时 1ms
     InitDS1302();    //初始化实时时钟
     InitLcd1602();   //初始化液晶
 
-    showTime();
-
-    
+    showTime();   
 }
 
 void ShowTime()

@@ -2,9 +2,9 @@
 
 #define LCD1602_DB P1
 
-sbit LCD1602_RS = P2 ^ 0;
-sbit LCD1602_RW = P2 ^ 1;
-sbit LCD1602_E = P2 ^ 2;
+sbit LCD1602_RS = P2^0;
+sbit LCD1602_RW = P2^1;
+sbit LCD1602_E = P2^2;
 
 void LcdWaitReady()
 {
@@ -51,8 +51,7 @@ void LcdSetCursor(unsigned char x, unsigned char y)
     }
     LcdWriteCmd(addr | 0x80); //设置 RAM 地址
 }
-void LcdShowStr(unsigned char x, unsigned char y,
-                unsigned char *str)
+void LcdShowStr(unsigned char x, unsigned char y, unsigned char *str)
 {
     LcdSetCursor(x, y); //设置起始地址
     while (*str != '\0')
@@ -60,7 +59,7 @@ void LcdShowStr(unsigned char x, unsigned char y,
         LcdWriteDat(*str++);
     }
 }
-void LcdInit()
+void InitLcd1602()
 {
     LcdWriteCmd(0x38); //16*2 显示，5*7 点阵，8 位数据接口
     LcdWriteCmd(0x0C); //显示器开，光标关闭

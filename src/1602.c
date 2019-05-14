@@ -1,14 +1,9 @@
-#include <reg52.h>
+#include "include/1602.h"
 
-#define LCD1602_DB P1
-
-sbit LCD1602_RS = P2^0;
-sbit LCD1602_RW = P2^1;
-sbit LCD1602_E = P2^2;
-
+/* 等待液晶准备好 */
 void LcdWaitReady()
 {
-    unsigned char sta;
+    uchar sta;
     LCD1602_DB = 0xFF;
     LCD1602_RS = 0;
     LCD1602_RW = 1;
@@ -20,7 +15,8 @@ void LcdWaitReady()
         //bit7 等于 1 表示液晶正忙，重复检测直到其等于 0 为止
     } while (sta & 0x80);
 }
-void LcdWriteCmd(unsigned char cmd)
+/* 向 LCD1602 液晶写入一字节命令，cmd-待写入命令值 */
+void LcdWriteCmd(uchar cmd)
 {
     LcdWaitReady();
     LCD1602_RS = 0;
@@ -29,7 +25,8 @@ void LcdWriteCmd(unsigned char cmd)
     LCD1602_E = 1;
     LCD1602_E = 0;
 }
-void LcdWriteDat(unsigned char dat)
+/* 向 LCD1602 液晶写入一字节数据，dat-待写入数据值 */
+void LcdWriteDat(uchar dat)
 {
     LcdWaitReady();
     LCD1602_RS = 1;
@@ -38,9 +35,10 @@ void LcdWriteDat(unsigned char dat)
     LCD1602_E = 1;
     LCD1602_E = 0;
 }
-void LcdSetCursor(unsigned char x, unsigned char y)
+/* 设置显示 RAM 起始地址，亦即光标位置，(x,y)-对应屏幕上的字符坐标 */
+void LcdSetCursor(uchar x, uchar y)
 {
-    unsigned char addr;
+    uchar addr;
     if (y == 0)
     {                    //由输入的屏幕坐标计算显示 RAM 的地址
         addr = 0x00 + x; //第一行字符地址从 0x00 起始
@@ -51,7 +49,9 @@ void LcdSetCursor(unsigned char x, unsigned char y)
     }
     LcdWriteCmd(addr | 0x80); //设置 RAM 地址
 }
-void LcdShowStr(unsigned char x, unsigned char y, unsigned char *str)
+/* 在液晶上显示字符串，(x,y)-对应屏幕上的起始坐标，
+    str-字符串指针*/
+void LcdShowStr(uchar x, uchar y, uchar *str)
 {
     LcdSetCursor(x, y); //设置起始地址
     while (*str != '\0')
@@ -59,6 +59,7 @@ void LcdShowStr(unsigned char x, unsigned char y, unsigned char *str)
         LcdWriteDat(*str++);
     }
 }
+/* 初始化 1602 液晶 */
 void InitLcd1602()
 {
     LcdWriteCmd(0x38); //16*2 显示，5*7 点阵，8 位数据接口

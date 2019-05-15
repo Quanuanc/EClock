@@ -1,4 +1,4 @@
-#include "include/config.h"
+#include "config.h"
 
 sbit LCD1602_RS = P2^5;
 sbit LCD1602_RW = P2^6;

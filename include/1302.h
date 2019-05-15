@@ -1,4 +1,4 @@
-#include "include/config.h"
+#include "config.h"
 
 sbit DS1302_SCLK = P1^1; //DS1302的IO引脚
 sbit DS1302_IO = P1^2; //DS1302的通信时钟引脚

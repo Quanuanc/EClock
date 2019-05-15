@@ -6,46 +6,30 @@
 void showTime();
 void showHT();
 
+sbit K1 = P1 ^ 4;
+
 void main()
 {
-	uchar cnt = 0; //记录T0溢出次数
-
+	uint flag = 0;
 	InitDS1302(); //初始化实时时钟
 	InitLcd1602();
 
-	TMOD = 0x01;
-	TH0 = 0xB8; //定时器定时20ms
-	TL0 = 0x00;
-	TR0 = 1; // 启动计数器
-
 	while (1)
 	{
-		showTime();
-		if (TF0 == 1)
+		if (flag % 2 == 0)
 		{
-			TF0 = 0;
-			TH0 = 0xB8;
-			TL0 = 0x00;
-			cnt++;
-			if (cnt >= 200)
+			showTime();
+			if (K1 == 0)
 			{
-				InitLcd1602();
-				showHT();
-				delay_ms(1000);
-				showHT();
-				delay_ms(1000);
-				showHT();
-				delay_ms(1000);
-				showHT();
-				delay_ms(1000);
-				showHT();
-				delay_ms(1000);
-				showHT();
-				delay_ms(1000);
-				showHT();
-				delay_ms(1000);
-				InitLcd1602();
-				cnt = 0;
+				flag++;
+			}
+		}
+		else
+		{
+			showHT();
+			if (K1 == 0)
+			{
+				flag++;
 			}
 		}
 	}

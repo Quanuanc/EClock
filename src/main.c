@@ -1,36 +1,40 @@
-#include "include/config.h"
 #include "include/1602.h"
 #include "include/1302.h"
 #include "include/DHT11.h"
+#include "include/KEY.h"
 
 void showTime();
 void showHT();
-
-sbit K1 = P1 ^ 4;
 
 void main()
 {
 	uint flag = 0;
 	InitDS1302(); //初始化实时时钟
 	InitLcd1602();
-
+	showTime();
 	while (1)
 	{
+		if (K3 == 0)
+		{
+			delay_ms(10);
+			if (K3 == 0)
+			{
+				flag++;
+				LcdWriteCmd(0x01);
+			}
+			while (!K3)
+				;
+			delay_ms(10);
+			while (!K3)
+				;
+		}
 		if (flag % 2 == 0)
 		{
 			showTime();
-			if (K1 == 0)
-			{
-				flag++;
-			}
 		}
 		else
 		{
 			showHT();
-			if (K1 == 0)
-			{
-				flag++;
-			}
 		}
 	}
 }

@@ -8,3 +8,4 @@ sbit LCD1602_E = P2^7;
 
 void InitLcd1602();
 void LcdShowStr(uchar x, uchar y, uchar *str);
+void LcdWriteCmd(uchar cmd);

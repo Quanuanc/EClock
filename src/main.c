@@ -9,11 +9,12 @@ void showHT();
 void main()
 {
 	uint flag = 0;
-	InitDS1302(); //初始化实时时钟
+	InitDS1302();
 	InitLcd1602();
 	showTime();
 	while (1)
 	{
+		/*按下K3，切换到显示温湿度*/
 		if (K3 == 0)
 		{
 			delay_ms(10);
@@ -28,6 +29,7 @@ void main()
 			while (!K3)
 				;
 		}
+		/*根据标记flag判断，双数显示时间，单数显示温湿度*/
 		if (flag % 2 == 0)
 		{
 			showTime();

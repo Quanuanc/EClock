@@ -59,7 +59,13 @@ uchar DS1302SingleRead(uchar reg)
 void InitDS1302()
 {
     uchar i;
-    uchar code InitTime[] = {0x00, 0x30, 0x12, 0x08, 0x10, 0x02, 0x13};//2013 年 10 月 8 日 星期二 12:30:00,顺序:秒，分，时...
+    uchar code InitTime[] = {0x00,  //秒
+                             0x00,  //分
+                             0x22,  //时
+                             0x16,  //日
+                             0x05,  //月
+                             0x04,  //星期
+                             0x19}; //年
 
     DS1302_RST = 0; //初始化 DS1302 通信引脚
     DS1302_SCLK = 0;

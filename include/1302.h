@@ -15,5 +15,6 @@ sbit DS1302_RST = P1^3; //DS1302使能引脚
 
 void InitDS1302();
 uchar DS1302SingleRead(uchar reg);
+void DS1302SingleWrite(uchar reg, uchar dat);
 
 #endif

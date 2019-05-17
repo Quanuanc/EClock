@@ -3,7 +3,7 @@
 #include "include/DHT11.h"
 #include "include/key.h"
 
-uchar second, minute, hour, week, day, month, year;
+uchar second, minute, hour, week, day, month, year, setNum = 0;
 bit displayFlag = 0, setFlag = 0;
 
 /*******读取时间函数**********/
@@ -187,7 +187,169 @@ void showHT()
 	LcdWrite(0x80 + 0x40 + 10, 0xdf); //显示符号°
 	LcdWrite(0x80 + 0x40 + 11, 'C');
 }
+/***********键盘扫描函数*************/
+void setTime()
+{
+	if (K1 == 0 && displayFlag == 0)
+	{
+		delay_ms(10);
+		if (K1 == 0)
+		{
+			setNum++;
 
+			switch (setNum)
+			{
+			case 1:
+				setFlag = 1;
+				DS1302SingleWrite(7, 0x00); //去除写保护
+				DS1302SingleWrite(0, 0x80); //时钟停下
+				LcdWrite(0 + 0x40, setNum);
+				LcdWriteCmd(0x80 + 0x40 + 11);
+				LcdWriteCmd(0x0f);
+				break;
+			case 2:
+				LcdWriteCmd(0x80 + 0x40 + 8);
+				break;
+			case 3:
+				LcdWriteCmd(0x80 + 0x40 + 5);
+				break;
+			case 4:
+				LcdWriteCmd(0x80 + 12);
+				break;
+			case 5:
+				LcdWriteCmd(0x80 + 9);
+				break;
+			case 6:
+				LcdWriteCmd(0x80 + 6);
+				break;
+			case 7:
+				setNum = 0;
+				setFlag = 0;
+
+				LcdWriteCmd(0x0c);										//不显示光标
+				DS1302SingleWrite(0, 0x00);								//时钟继续
+				DS1302SingleWrite(0, (second / 10) << 4 | second % 10); //将调节后的秒写入DS1302
+				DS1302SingleWrite(1, (minute / 10) << 4 | minute % 10); //将调节后的分写入DS1302
+				DS1302SingleWrite(2, (hour / 10) << 4 | hour % 10);		//将调节后的时写入DS1302
+				DS1302SingleWrite(5, (week / 10) << 4 | week % 10);		//将调节后的星期写入DS1302
+				DS1302SingleWrite(3, (day / 10) << 4 | day % 10);		//将调节后的日写入DS1302
+				DS1302SingleWrite(4, (month / 10) << 4 | month % 10);   //将调节后的月写入DS1302
+				DS1302SingleWrite(6, (year / 10) << 4 | year % 10);		//
+																		//DS1302SingleWrite(0,0x00);//时钟继续走这一句不能加在这，否则每次调 完时后秒会归O
+				DS1302SingleWrite(7, 0x80);								//写保护关
+																		//LcdWriteCmd(0x0c);
+				break;
+			}
+		}
+		while (!K1)
+			;
+		delay_ms(10);
+		while (!K1)
+			;
+	}
+	if (setNum != 0)
+	{
+		if (K3 == 0)
+		{
+			delay_ms(10);
+			while (!K3)
+				;
+			switch (setNum)
+			{
+			case 1:
+				second++;
+				if (second == 60)
+					second = 0;
+				//show_1302(7,0x00);//去除写保护
+				showSecond();
+				LcdWriteCmd(0x80 + 0x40 + 11);
+				break;
+			case 2:
+				minute++;
+				if (minute == 60)
+					minute = 0;
+				showMinute();
+				LcdWriteCmd(0x80 + 0x40 + 8);
+				break;
+			case 3:
+				hour++;
+				if (hour == 24)
+					hour = 0;
+				showHour();
+				LcdWriteCmd(0x80 + 0x40 + 5);
+				break;
+			case 4:
+				day++;
+				if (day == 32)
+					day = 1;
+				showDay();
+				LcdWriteCmd(0x80 + 12);
+				break;
+			case 5:
+				month++;
+				if (month == 13)
+					month = 1;
+				showMonth();
+				LcdWriteCmd(0x80 + 9);
+				break;
+			case 6:
+				year++;
+				showYear();
+				LcdWriteCmd(0x80 + 6);
+				break;
+
+				// default:break;
+			}
+		}
+		if (K2 == 0)
+		{
+			delay_ms(10);
+			while (!K2)
+				;
+			switch (setNum)
+			{
+			case 1:
+				second--;
+				if (second < 0)
+					second = 59;
+				showSecond();
+				LcdWriteCmd(0x80 + 0x40 + 11);
+				break;
+			case 2:
+				minute--;
+				if (minute < 0)
+					minute = 59;
+				showMinute();
+				LcdWriteCmd(0x80 + 0x40 + 8);
+				break;
+			case 3:
+				hour--;
+				if (hour < 0)
+					hour = 23;
+				showHour();
+				LcdWriteCmd(0x80 + 0x40 + 5);
+				break;
+			case 4:
+				day--;
+				showDay();
+				LcdWriteCmd(0x80 + 12);
+				break;
+			case 5:
+				month--;
+				showMonth();
+				LcdWriteCmd(0x80 + 9);
+				break;
+			case 6:
+				year--;
+				showYear();
+				LcdWriteCmd(0x80 + 6);
+				break;
+
+				//  default:break;
+			}
+		}
+	}
+}
 /*************主函数****************/
 void main()
 {
@@ -196,29 +358,34 @@ void main()
 	showTime();
 	while (1)
 	{
+		setTime();
+		//LcdWrite(0x80 + 0x40, '0' + setNum);
 		/*按下K3，切换到显示温湿度*/
-		if (K3 == 0)
+		if (setFlag == 0)
 		{
-			delay_ms(10);
 			if (K3 == 0)
 			{
-				displayFlag = ~displayFlag;
-				LcdWriteCmd(0x01);
+				delay_ms(10);
+				if (K3 == 0)
+				{
+					displayFlag = ~displayFlag;
+					LcdWriteCmd(0x01);
+				}
+				while (!K3)
+					;
+				delay_ms(10);
+				while (!K3)
+					;
 			}
-			while (!K3)
-				;
-			delay_ms(10);
-			while (!K3)
-				;
-		}
-		/*根据标记flag判断，双数显示时间，单数显示温湿度*/
-		if (displayFlag == 0)
-		{
-			showTime();
-		}
-		else
-		{
-			showHT();
+			/*根据标记flag判断，双数显示时间，单数显示温湿度*/
+			if (displayFlag == 0)
+			{
+				showTime();
+			}
+			else
+			{
+				showHT();
+			}
 		}
 	}
 }

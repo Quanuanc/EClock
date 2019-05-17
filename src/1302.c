@@ -71,7 +71,7 @@ void InitDS1302()
     DS1302_SCLK = 0;
     i = DS1302SingleRead(0); //读取秒寄存器
 
-    if ((i & 0x80) == 0)
+    if ((i & 0x80) != 0)
     {                            //由秒寄存器最高位 CH 的值判断 DS1302 是否已停止
         DS1302SingleWrite(7, 0x00); //撤销写保护以允许写入数据
         for (i = 0; i < 7; i++)

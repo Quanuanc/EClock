@@ -1,92 +1,150 @@
 #include "include/1602.h"
 #include "include/1302.h"
 #include "include/DHT11.h"
-#include "include/KEY.h"
+#include "include/key.h"
 
-void showTime();
-void showHT();
+uchar second, minute, hour, week, day, month, year;
+bit displayFlag = 0, setFlag = 0;
 
-void main()
+/*******读取时间函数**********/
+uchar readSecond()
 {
-	uint flag = 0;
-	InitDS1302();
-	InitLcd1602();
-	showTime();
-	while (1)
-	{
-		/*按下K3，切换到显示温湿度*/
-		if (K3 == 0)
-		{
-			delay_ms(10);
-			if (K3 == 0)
-			{
-				flag++;
-				LcdWriteCmd(0x01);
-			}
-			while (!K3)
-				;
-			delay_ms(10);
-			while (!K3)
-				;
-		}
-		/*根据标记flag判断，双数显示时间，单数显示温湿度*/
-		if (flag % 2 == 0)
-		{
-			showTime();
-		}
-		else
-		{
-			showHT();
-		}
-	}
+	uchar dat;
+	dat = DS1302SingleRead(0);
+	second = ((dat & 0x70) >> 4) * 10 + (dat & 0x0f);
+	return second;
+}
+uchar readMinute()
+{
+	uchar dat;
+	dat = DS1302SingleRead(1);
+	minute = ((dat & 0x70) >> 4) * 10 + (dat & 0x0f);
+	return minute;
+}
+uchar readHour()
+{
+	uchar dat;
+	dat = DS1302SingleRead(2);
+	hour = ((dat & 0x70) >> 4) * 10 + (dat & 0x0f);
+	return hour;
+}
+uchar readDay()
+{
+	uchar dat;
+	dat = DS1302SingleRead(3);
+	day = ((dat & 0x70) >> 4) * 10 + (dat & 0x0f);
+	return day;
+}
+uchar readMonth()
+{
+	uchar dat;
+	dat = DS1302SingleRead(4);
+	month = ((dat & 0x70) >> 4) * 10 + (dat & 0x0f);
+	return month;
+}
+uchar readWeek()
+{
+	uchar dat;
+	dat = DS1302SingleRead(5);
+	week = ((dat & 0x70) >> 4) * 10 + (dat & 0x0f);
+	return week;
+}
+uchar readYear()
+{
+	uchar dat;
+	dat = DS1302SingleRead(6);
+	year = ((dat & 0x70) >> 4) * 10 + (dat & 0x0f);
+	return year;
+}
+uchar readTime()
+{
+	readSecond();
+	readMinute();
+	readHour();
+	readDay();
+	readMonth();
+	readWeek();
+	readYear();
+	return second, minute, hour, week, day, month, year;
+}
+/*******显示时间函数**********/
+void showSecond()
+{
+	uchar ten, unit;
+	ten = second / 10;
+	unit = second % 10;
+	LcdWrite(0x80 + 0x40 + 10, 0x30 + ten);
+	LcdWrite(0x80 + 0x40 + 11, 0x30 + unit);
 }
 
-void ShowTime()
+void showMinute()
 {
-	uchar i;
-	uchar psec = 0xAA; //秒备份，初值 AA 确保首次读取时间后会刷新显示
-	uchar time[8];	 //当前时间数组
-	uchar str[12];	 //字符串转换缓冲区
-
-	for (i = 0; i < 7; i++)
-	{ //读取 DS1302 当前时间
-		time[i] = DS1302SingleRead(i);
-	}
-	if (psec != time[0])
-	{				  //检测到时间有变化时刷新显示
-		str[0] = '2'; //添加年份的高 2 位：20
-		str[1] = '0';
-		str[2] = (time[6] >> 4) + '0';   //“年”高位数字转换为 ASCII 码
-		str[3] = (time[6] & 0x0F) + '0'; //“年”低位数字转换为 ASCII 码
-		str[4] = '-';					 //添加日期分隔符
-		str[5] = (time[4] >> 4) + '0';   //“月”
-		str[6] = (time[4] & 0x0F) + '0';
-		str[7] = '-';
-		str[8] = (time[3] >> 4) + '0'; //“日”
-		str[9] = (time[3] & 0x0F) + '0';
-		str[10] = '\0';
-		LcdShowStr(3, 0, str); //显示到液晶的第一行
-
-		str[0] = (time[2] >> 4) + '0'; //“时”
-		str[1] = (time[2] & 0x0F) + '0';
-		str[2] = ':';				   //添加时间分隔符
-		str[3] = (time[1] >> 4) + '0'; //“分”
-		str[4] = (time[1] & 0x0F) + '0';
-		str[5] = ':';
-		str[6] = (time[0] >> 4) + '0'; //“秒”
-		str[7] = (time[0] & 0x0F) + '0';
-		str[8] = '\0';
-		LcdShowStr(4, 1, str); //显示到液晶的第二行
-		psec = time[0];		   //用当前值更新上次秒数
-	}
+	uchar ten, unit;
+	ten = minute / 10;
+	unit = minute % 10;
+	LcdWrite(0x80 + 0x40 + 7, 0x30 + ten);
+	LcdWrite(0x80 + 0x40 + 8, 0x30 + unit);
+	LcdWrite(0x80 + 0x40 + 9, ':');
 }
-
+void showHour()
+{
+	uchar ten, unit;
+	ten = hour / 10;
+	unit = hour % 10;
+	LcdWrite(0x80 + 0x40 + 4, 0x30 + ten);
+	LcdWrite(0x80 + 0x40 + 5, 0x30 + unit);
+	LcdWrite(0x80 + 0x40 + 6, ':');
+}
+void showDay()
+{
+	uchar ten, unit;
+	ten = day / 10;
+	unit = day % 10;
+	LcdWrite(0x80 + 11, 0x30 + ten);
+	LcdWrite(0x80 + 12, 0x30 + unit);
+}
+void showMonth()
+{
+	uchar ten, unit;
+	ten = month / 10;
+	unit = month % 10;
+	LcdWrite(0x80 + 8, 0x30 + ten);
+	LcdWrite(0x80 + 9, 0x30 + unit);
+	LcdWrite(0x80 + 10, '-');
+}
+void showYear()
+{
+	uchar ten, unit;
+	ten = year / 10;
+	unit = year % 10;
+	LcdWrite(0x80 + 3, '2');
+	LcdWrite(0x80 + 4, '0');
+	LcdWrite(0x80 + 5, 0x30 + ten);
+	LcdWrite(0x80 + 6, 0x30 + unit);
+	LcdWrite(0x80 + 7, '-');
+}
+void showTime()
+{
+	readTime();
+	showSecond();
+	showMinute();
+	showHour();
+	showDay();
+	showMonth();
+	showYear();
+}
+/*******显示温湿度函数******/
 void showHT()
 {
-	uchar rec_dat[13];
-	uchar title[] = "H      T";
+	uchar DHT[4];
 	uchar R_H, R_L, T_H, T_L, RH, RL, TH, TL, revise;
-	LcdShowStr(4, 0, title);
+
+	LcdWrite(0x80 + 5, 'H');
+	LcdWrite(0x80 + 6, ':');
+
+	LcdWrite(0x80 + 0x40 + 5, 'T');
+	LcdWrite(0x80 + 0x40 + 6, ':');
+
 	delay_ms(20);
 
 	DHT11_start();
@@ -112,20 +170,55 @@ void showHT()
 		}
 
 		/*数据处理，方便显示*/
-		rec_dat[0] = '0' + (RH / 10);
-		rec_dat[1] = '0' + (RH % 10);
-		rec_dat[2] = '%';
-		rec_dat[3] = ' ';
-		rec_dat[4] = ' ';
-		rec_dat[5] = ' ';
-		rec_dat[6] = ' ';
-		rec_dat[7] = '0' + (TH / 10);
-		rec_dat[8] = '0' + (TH % 10);
-		rec_dat[9] = 'C';
-		rec_dat[10] = ' ';
-		rec_dat[11] = ' ';
-		rec_dat[12] = ' ';
+		DHT[0] = '0' + (RH / 10);
+		DHT[1] = '0' + (RH % 10);
+
+		DHT[2] = '0' + (TH / 10);
+		DHT[3] = '0' + (TH % 10);
 	}
 
-	LcdShowStr(3, 1, rec_dat);
+	LcdWrite(0x80 + 8, DHT[0]);
+	LcdWrite(0x80 + 9, DHT[1]);
+	LcdWrite(0x80 + 10, ' ');
+	LcdWrite(0x80 + 11, '%');
+
+	LcdWrite(0x80 + 0x40 + 8, DHT[2]);
+	LcdWrite(0x80 + 0x40 + 9, DHT[3]);
+	LcdWrite(0x80 + 0x40 + 10, 0xdf); //显示符号°
+	LcdWrite(0x80 + 0x40 + 11, 'C');
+}
+
+/*************主函数****************/
+void main()
+{
+	InitDS1302();
+	InitLcd1602();
+	showTime();
+	while (1)
+	{
+		/*按下K3，切换到显示温湿度*/
+		if (K3 == 0)
+		{
+			delay_ms(10);
+			if (K3 == 0)
+			{
+				displayFlag = ~displayFlag;
+				LcdWriteCmd(0x01);
+			}
+			while (!K3)
+				;
+			delay_ms(10);
+			while (!K3)
+				;
+		}
+		/*根据标记flag判断，双数显示时间，单数显示温湿度*/
+		if (displayFlag == 0)
+		{
+			showTime();
+		}
+		else
+		{
+			showHT();
+		}
+	}
 }

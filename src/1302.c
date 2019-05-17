@@ -20,7 +20,7 @@ void DS1302ByteWrite(uchar dat)
     }
     DS1302_IO = 1; //最后确保释放 IO 引脚
 }
-/* 由 DS1302 通信总线上读取一个字节 */
+/* 从 DS1302 通信总线上读取一个字节 */
 uchar DS1302ByteRead()
 {
     uchar mask;
@@ -59,20 +59,20 @@ uchar DS1302SingleRead(uchar reg)
 void InitDS1302()
 {
     uchar i;
-    uchar code InitTime[] = {0x00,  //秒
-                             0x00,  //分
-                             0x22,  //时
-                             0x16,  //日
+    uchar code InitTime[] = {0x55,  //秒
+                             0x39,  //分
+                             0x09,  //时
+                             0x17,  //日
                              0x05,  //月
-                             0x04,  //星期
+                             0x05,  //星期
                              0x19}; //年
 
     DS1302_RST = 0; //初始化 DS1302 通信引脚
     DS1302_SCLK = 0;
     i = DS1302SingleRead(0); //读取秒寄存器
 
-    if ((i & 0x80) != 0)
-    {                               //由秒寄存器最高位 CH 的值判断 DS1302 是否已停止
+    if ((i & 0x80) == 0)
+    {                            //由秒寄存器最高位 CH 的值判断 DS1302 是否已停止
         DS1302SingleWrite(7, 0x00); //撤销写保护以允许写入数据
         for (i = 0; i < 7; i++)
         { //设置 DS1302 为默认的初始时间

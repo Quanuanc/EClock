@@ -1,13 +1,5 @@
 #include "include/config.h"
 
-void delay(uint n)
-{
-    uint x, y;
-    for (x = n; x > 0; x--)
-        for (y = 110; y > 0; y--)
-            ;
-}
-
 void delay_us(uchar n)
 {
     while (--n)

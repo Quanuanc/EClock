@@ -359,7 +359,7 @@ void main()
 	while (1)
 	{
 		setTime();
-		//LcdWrite(0x80 + 0x40, '0' + setNum);
+		//LcdWrite(0x80 + 0x40, '0' + setNum); //测试K1按键按下次数
 		/*按下K3，切换到显示温湿度*/
 		if (setFlag == 0)
 		{

@@ -226,18 +226,17 @@ void setTime()
 				setNum = 0;
 				setFlag = 0;
 
-				LcdWriteCmd(0x0c);										//不显示光标
-				DS1302SingleWrite(0, 0x00);								//时钟继续
-				DS1302SingleWrite(0, (second / 10) << 4 | second % 10); //将调节后的秒写入DS1302
-				DS1302SingleWrite(1, (minute / 10) << 4 | minute % 10); //将调节后的分写入DS1302
-				DS1302SingleWrite(2, (hour / 10) << 4 | hour % 10);		//将调节后的时写入DS1302
-				DS1302SingleWrite(5, (week / 10) << 4 | week % 10);		//将调节后的星期写入DS1302
-				DS1302SingleWrite(3, (day / 10) << 4 | day % 10);		//将调节后的日写入DS1302
-				DS1302SingleWrite(4, (month / 10) << 4 | month % 10);   //将调节后的月写入DS1302
-				DS1302SingleWrite(6, (year / 10) << 4 | year % 10);		//
-																		//DS1302SingleWrite(0,0x00);//时钟继续走这一句不能加在这，否则每次调 完时后秒会归O
-				DS1302SingleWrite(7, 0x80);								//写保护关
-																		//LcdWriteCmd(0x0c);
+				LcdWriteCmd(0x0c);
+				DS1302SingleWrite(0, 0x00);
+				DS1302SingleWrite(0, (second / 10) << 4 | second % 10);
+				DS1302SingleWrite(1, (minute / 10) << 4 | minute % 10);
+				DS1302SingleWrite(2, (hour / 10) << 4 | hour % 10);
+				DS1302SingleWrite(5, (week / 10) << 4 | week % 10);
+				DS1302SingleWrite(3, (day / 10) << 4 | day % 10);
+				DS1302SingleWrite(4, (month / 10) << 4 | month % 10);
+				DS1302SingleWrite(6, (year / 10) << 4 | year % 10);
+																	
+				DS1302SingleWrite(7, 0x80);
 				break;
 			}
 		}

@@ -2,6 +2,7 @@
 #include "include/1302.h"
 #include "include/DHT11.h"
 #include "include/key.h"
+#include "include/ny3p.h"
 
 uchar second, minute, hour, week, day, month, year, setNum = 0;
 bit displayFlag = 0, setFlag = 0;
@@ -235,7 +236,7 @@ void setTime()
 				DS1302SingleWrite(3, (day / 10) << 4 | day % 10);
 				DS1302SingleWrite(4, (month / 10) << 4 | month % 10);
 				DS1302SingleWrite(6, (year / 10) << 4 | year % 10);
-																	
+
 				DS1302SingleWrite(7, 0x80);
 				break;
 			}
@@ -374,6 +375,22 @@ void main()
 					;
 				delay_ms(10);
 				while (!K3)
+					;
+			}
+			if (K2 == 0)
+			{
+				delay_ms(10);
+				if (K2 == 0)
+				{
+					//LcdWrite(0x80, '8');
+					NPlay(22);				 // 现在时刻北京时间：
+					NPlayTimeHour(hour);	 //播报时
+					NPlayTimeMinute(minute); //播报分
+				}
+				while (!K2)
+					;
+				delay_ms(10);
+				while (!K2)
 					;
 			}
 			/*根据标记flag判断，双数显示时间，单数显示温湿度*/

@@ -6,6 +6,7 @@
 
 uchar second, minute, hour, week, day, month, year, setNum = 0;
 bit displayFlag = 0, setFlag = 0;
+sbit soundCheck = P2 ^ 0;
 
 /*******读取时间函数**********/
 uchar readSecond()
@@ -392,6 +393,13 @@ void main()
 				delay_ms(10);
 				while (!K2)
 					;
+			}
+			if (soundCheck == 0)
+			{
+				LcdWrite(0x80, '0');
+				NPlay(22);				 // 现在时刻北京时间：
+				NPlayTimeHour(hour);	 //播报时
+				NPlayTimeMinute(minute); //播报分
 			}
 			/*根据标记flag判断，双数显示时间，单数显示温湿度*/
 			if (displayFlag == 0)

@@ -1,12 +1,13 @@
 #include "include/1602.h"
 #include "include/1302.h"
-#include "include/DHT11.h"
+#include "include/DHT.h"
 #include "include/key.h"
 #include "include/ny3p.h"
 
 uchar second, minute, hour, week, day, month, year, setNum = 0;
 bit displayFlag = 0, setFlag = 0;
-sbit soundCheck = P2 ^ 0;
+sbit soundCheck = P2 ^ 0; //声音传感器，0-检测到声音，1-未检测到
+sbit backlight = P2 ^ 1;  //1602背光灯控制，0-背光开，1-背光关
 
 /*******读取时间函数**********/
 uchar readSecond()
@@ -139,27 +140,21 @@ void showTime()
 void showHT()
 {
 	uchar DHT[4];
-	uchar R_H, R_L, T_H, T_L, RH, RL, TH, TL, revise;
-
-	LcdWrite(0x80 + 5, 'H');
-	LcdWrite(0x80 + 6, ':');
-
-	LcdWrite(0x80 + 0x40 + 5, 'T');
-	LcdWrite(0x80 + 0x40 + 6, ':');
+	uchar R_H, R_L, T_H, T_L, RH, RL, TH, TL, revise, H, T;
 
 	delay_ms(20);
 
-	DHT11_start();
+	DHTStart();
 	if (Data == 0)
 	{
 		while (Data == 0)
-			;					   //等待拉高
-		delay_us(40);			   //拉高后延时80us
-		R_H = DHT11_rec_byte();	//接收湿度高八位
-		R_L = DHT11_rec_byte();	//接收湿度低八位
-		T_H = DHT11_rec_byte();	//接收温度高八位
-		T_L = DHT11_rec_byte();	//接收温度低八位
-		revise = DHT11_rec_byte(); //接收校正位
+			;					//等待拉高
+		delay_us(40);			//拉高后延时80us
+		R_H = DHTByteRead();	//接收湿度高八位
+		R_L = DHTByteRead();	//接收湿度低八位
+		T_H = DHTByteRead();	//接收温度高八位
+		T_L = DHTByteRead();	//接收温度低八位
+		revise = DHTByteRead(); //接收校正位
 
 		delay_us(25); //结束
 
@@ -171,18 +166,32 @@ void showHT()
 			TL = T_L;
 		}
 
-		/*数据处理，方便显示*/
-		DHT[0] = '0' + (RH / 10);
-		DHT[1] = '0' + (RH % 10);
+		/*DHT11 数据处理，方便显示*/
+		// DHT[0] = '0' + (RH / 10);
+		// DHT[1] = '0' + (RH % 10);
 
-		DHT[2] = '0' + (TH / 10);
-		DHT[3] = '0' + (TH % 10);
+		// DHT[2] = '0' + (TH / 10);
+		// DHT[3] = '0' + (TH % 10);
+
+		/*DHT21 数据处理，方便显示*/
+		H = (RH * 256 + RL) / 10; //DHT21湿度数据格式为16bit，并且是实际湿度的10倍
+		T = (TH * 256 + TL) / 10;
+		DHT[0] = '0' + (H / 10);
+		DHT[1] = '0' + (H % 10);
+
+		DHT[2] = '0' + (T / 10);
+		DHT[3] = '0' + (T % 10);
 	}
+
+	LcdWrite(0x80 + 5, 'H');
+	LcdWrite(0x80 + 6, ':');
+	LcdWrite(0x80 + 0x40 + 5, 'T');
+	LcdWrite(0x80 + 0x40 + 6, ':');
 
 	LcdWrite(0x80 + 8, DHT[0]);
 	LcdWrite(0x80 + 9, DHT[1]);
-	LcdWrite(0x80 + 10, ' ');
-	LcdWrite(0x80 + 11, '%');
+	//LcdWrite(0x80 + 10, ' ');
+	LcdWrite(0x80 + 10, '%');
 
 	LcdWrite(0x80 + 0x40 + 8, DHT[2]);
 	LcdWrite(0x80 + 0x40 + 9, DHT[3]);
@@ -261,7 +270,6 @@ void setTime()
 				second++;
 				if (second == 60)
 					second = 0;
-				//show_1302(7,0x00);//去除写保护
 				showSecond();
 				LcdWriteCmd(0x80 + 0x40 + 11);
 				break;
@@ -298,8 +306,6 @@ void setTime()
 				showYear();
 				LcdWriteCmd(0x80 + 6);
 				break;
-
-				// default:break;
 			}
 		}
 		if (K2 == 0)
@@ -345,8 +351,6 @@ void setTime()
 				showYear();
 				LcdWriteCmd(0x80 + 6);
 				break;
-
-				//  default:break;
 			}
 		}
 	}
@@ -357,10 +361,10 @@ void main()
 	InitDS1302();
 	InitLcd1602();
 	showTime();
+	backlight = 0; //打开1602背光
 	while (1)
 	{
 		setTime();
-		//LcdWrite(0x80 + 0x40, '0' + setNum); //测试K1按键按下次数
 		/*按下K3，切换到显示温湿度*/
 		if (setFlag == 0)
 		{
@@ -383,7 +387,6 @@ void main()
 				delay_ms(10);
 				if (K2 == 0)
 				{
-					//LcdWrite(0x80, '8');
 					NPlay(22);				 // 现在时刻北京时间：
 					NPlayTimeHour(hour);	 //播报时
 					NPlayTimeMinute(minute); //播报分
@@ -396,10 +399,14 @@ void main()
 			}
 			if (soundCheck == 0)
 			{
-				LcdWrite(0x80, '0');
-				NPlay(22);				 // 现在时刻北京时间：
-				NPlayTimeHour(hour);	 //播报时
-				NPlayTimeMinute(minute); //播报分
+				delay_ms(100);
+				if (soundCheck == 0)
+				{
+					LcdWrite(0x80, '0');
+					NPlay(22);				 // 现在时刻北京时间：
+					NPlayTimeHour(hour);	 //播报时
+					NPlayTimeMinute(minute); //播报分
+				}
 			}
 			/*根据标记flag判断，双数显示时间，单数显示温湿度*/
 			if (displayFlag == 0)

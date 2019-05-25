@@ -1,6 +1,6 @@
-#include "include/DHT11.h"
+#include "include/DHT.h"
 
-void DHT11_start()
+void DHTStart()
 {
     Data = 1;
     delay_us(2);
@@ -10,7 +10,7 @@ void DHT11_start()
     delay_us(30);
 }
 
-uchar DHT11_rec_byte() //接收一个字节
+uchar DHTByteRead() //接收一个字节
 {
     uchar i, dat = 0;
     for (i = 0; i < 8; i++) //从高到低依次接收8位数据

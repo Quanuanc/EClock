@@ -6,6 +6,9 @@
 
 uchar second, minute, hour, week, day, month, year, setNum = 0;
 bit displayFlag = 0, setFlag = 0;
+
+uchar timer0Count = 0, timer1Count = 0; //定时器溢出次数
+
 sbit soundCheck = P2 ^ 0; //声音传感器，0-检测到声音，1-未检测到
 sbit backlight = P2 ^ 1;  //1602背光灯控制，0-背光开，1-背光关
 
@@ -206,6 +209,9 @@ void setTime()
 		delay_ms(10);
 		if (K1 == 0)
 		{
+			backlight = 0;
+			configTimer0();
+			timer0Count=0;
 			setNum++;
 
 			switch (setNum)
@@ -362,6 +368,8 @@ void main()
 	InitLcd1602();
 	showTime();
 	backlight = 0; //打开1602背光
+	configTimer0();
+	//configTimer1();
 	while (1)
 	{
 		setTime();
@@ -373,6 +381,9 @@ void main()
 				delay_ms(10);
 				if (K3 == 0)
 				{
+					backlight = 0;
+					configTimer0();
+					timer0Count=0;
 					displayFlag = ~displayFlag;
 					LcdWriteCmd(0x01);
 				}
@@ -387,6 +398,9 @@ void main()
 				delay_ms(10);
 				if (K2 == 0)
 				{
+					backlight = 0;
+					configTimer0();
+					timer0Count=0;
 					NPlay(22);				 // 现在时刻北京时间：
 					NPlayTimeHour(hour);	 //播报时
 					NPlayTimeMinute(minute); //播报分
@@ -399,24 +413,35 @@ void main()
 			}
 			if (soundCheck == 0)
 			{
-				delay_ms(100);
-				if (soundCheck == 0)
-				{
+				// delay_ms(400);
+				// if (soundCheck == 0)
+				// {
+					backlight = 0;
+					configTimer0();
+					timer0Count=0;
 					LcdWrite(0x80, '0');
 					NPlay(22);				 // 现在时刻北京时间：
 					NPlayTimeHour(hour);	 //播报时
 					NPlayTimeMinute(minute); //播报分
-				}
+				// }
 			}
 			/*根据标记flag判断，双数显示时间，单数显示温湿度*/
 			if (displayFlag == 0)
-			{
 				showTime();
-			}
 			else
-			{
 				showHT();
-			}
 		}
+	}
+}
+
+void tenSecBacklight() interrupt 1
+{
+	TH0 = 0x4C;
+	TL0 = 0x00;
+	timer0Count++;
+	if (timer0Count == 200)
+	{
+		backlight = 1;
+		timer0Count = 0;
 	}
 }

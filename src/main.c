@@ -2,15 +2,16 @@
 #include "include/1302.h"
 #include "include/DHT.h"
 #include "include/key.h"
+#include "include/sound.h"
 #include "include/ny3p.h"
 
 uchar second, minute, hour, week, day, month, year, setNum = 0;
 bit displayFlag = 0, setFlag = 0;
+uint timer0Count = 0;	//定时器溢出次数
+sbit backlight = P2 ^ 1; //1602背光灯控制，0-背光开，1-背光关
 
-uchar timer0Count = 0, timer1Count = 0; //定时器溢出次数
-
-sbit soundCheck = P2 ^ 0; //声音传感器，0-检测到声音，1-未检测到
-sbit backlight = P2 ^ 1;  //1602背光灯控制，0-背光开，1-背光关
+uint waitTime = 0;
+uchar soundState = 0;
 
 /*******读取时间函数**********/
 uchar readSecond()
@@ -193,8 +194,8 @@ void showHT()
 
 	LcdWrite(0x80 + 8, DHT[0]);
 	LcdWrite(0x80 + 9, DHT[1]);
-	//LcdWrite(0x80 + 10, ' ');
-	LcdWrite(0x80 + 10, '%');
+	LcdWrite(0x80 + 10, ' ');
+	LcdWrite(0x80 + 11, '%');
 
 	LcdWrite(0x80 + 0x40 + 8, DHT[2]);
 	LcdWrite(0x80 + 0x40 + 9, DHT[3]);
@@ -210,9 +211,12 @@ void setTime()
 		if (K1 == 0)
 		{
 			backlight = 0;
-			configTimer0();
-			timer0Count=0;
 			setNum++;
+
+			TH0 = 0x4C;
+			TL0 = 0x00;
+			TR0 = 1;
+			timer0Count = 0;
 
 			switch (setNum)
 			{
@@ -361,18 +365,82 @@ void setTime()
 		}
 	}
 }
+
+/******检测声音响多少次*********/
+// uchar soundRead()
+// {
+// 	uchar soundStateTemp = 0;
+// 	if (sound == 0)
+// 	{
+// 		delay_ms(5);
+// 		if (sound == 0)
+// 		{
+// 			while (sound == 0)
+// 				;
+// 			waitTime = 0;
+// 			soundState++;
+// 			LcdWrite(0x80+1,'0'+soundState);
+// 		}
+// 		while (!sound)
+// 			;
+// 		delay_ms(5);
+// 		while (!sound)
+// 			;
+// 	}
+// 	if (waitTime >= 100)
+// 	{
+// 		waitTime = 0;
+// 		soundStateTemp = soundState;
+// 		soundState = 0;
+// 	}
+// 	return soundStateTemp;
+// }
+
 /*************主函数****************/
 void main()
 {
+	uchar soundCount;
 	InitDS1302();
 	InitLcd1602();
 	showTime();
 	backlight = 0; //打开1602背光
-	configTimer0();
-	//configTimer1();
+
+	TMOD = 0x11;
+	EA = 1;
+
+	TH0 = 0x4C;
+	TL0 = 0x00;
+	ET0 = 1;
+	TR0 = 1;
+
+	// TH1 = (65536 - 9216) / 256;
+	// TL1 = (65536 - 9216) % 256;
+	// ET1 = 1;
+	// TR1 = 1;
+
 	while (1)
 	{
 		setTime();
+		// soundCount = soundRead();
+		// if (soundCount == 2)
+		// {
+		// 	LcdWrite(0x80, '0' + soundCount);
+		// 	backlight = 0;
+		// 	TH0 = 0x4C;
+		// 	TL0 = 0x00;
+		// 	TR0 = 1;
+		// 	timer0Count = 0;
+		// }
+		// else if (soundCount == 3)
+		// {
+		// 	LcdWrite(0x80, '0' + soundCount);
+		// 	backlight = 0;
+		// 	TH0 = 0x4C;
+		// 	TL0 = 0x00;
+		// 	TR0 = 1;
+		// 	timer0Count = 0;
+		// }
+
 		/*按下K3，切换到显示温湿度*/
 		if (setFlag == 0)
 		{
@@ -382,8 +450,10 @@ void main()
 				if (K3 == 0)
 				{
 					backlight = 0;
-					configTimer0();
-					timer0Count=0;
+					TH0 = 0x4C;
+					TL0 = 0x00;
+					TR0 = 1;
+					timer0Count = 0;
 					displayFlag = ~displayFlag;
 					LcdWriteCmd(0x01);
 				}
@@ -393,14 +463,17 @@ void main()
 				while (!K3)
 					;
 			}
+
 			if (K2 == 0)
 			{
 				delay_ms(10);
 				if (K2 == 0)
 				{
 					backlight = 0;
-					configTimer0();
-					timer0Count=0;
+					TH0 = 0x4C;
+					TL0 = 0x00;
+					TR0 = 1;
+					timer0Count = 0;
 					NPlay(22);				 // 现在时刻北京时间：
 					NPlayTimeHour(hour);	 //播报时
 					NPlayTimeMinute(minute); //播报分
@@ -411,20 +484,7 @@ void main()
 				while (!K2)
 					;
 			}
-			if (soundCheck == 0)
-			{
-				// delay_ms(400);
-				// if (soundCheck == 0)
-				// {
-					backlight = 0;
-					configTimer0();
-					timer0Count=0;
-					LcdWrite(0x80, '0');
-					NPlay(22);				 // 现在时刻北京时间：
-					NPlayTimeHour(hour);	 //播报时
-					NPlayTimeMinute(minute); //播报分
-				// }
-			}
+
 			/*根据标记flag判断，双数显示时间，单数显示温湿度*/
 			if (displayFlag == 0)
 				showTime();
@@ -434,14 +494,21 @@ void main()
 	}
 }
 
-void tenSecBacklight() interrupt 1
+void Timer0() interrupt 1
 {
 	TH0 = 0x4C;
 	TL0 = 0x00;
 	timer0Count++;
-	if (timer0Count == 200)
+	if (timer0Count == 400)
 	{
 		backlight = 1;
 		timer0Count = 0;
 	}
 }
+
+// void Timer1() interrupt 3
+// {
+// 	TH1 = (65536 - 9216) / 256;
+// 	TL1 = (65536 - 9216) % 256;
+// 	waitTime++;
+// }

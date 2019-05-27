@@ -133,7 +133,7 @@ void showYear()
 }
 void showTime()
 {
-
+	readTime();
 	showSecond();
 	showMinute();
 	showHour();
@@ -389,7 +389,7 @@ uchar soundRead()
 	uchar soundStateTemp = 0;
 	if (sound == 0)
 	{
-		delay_ms(1);
+		delay_us(100);
 		if (sound == 0)
 		{
 			while (sound == 0)
@@ -398,11 +398,11 @@ uchar soundRead()
 			soundState++;
 			LcdWrite(0x80 + 15, '0' + soundState);
 		}
-		while (!sound)
-			;
-		delay_ms(1);
-		while (!sound)
-			;
+		// while (!sound)
+		// 	;
+		// delay_ms(1);
+		// while (!sound)
+		// 	;
 	}
 	if (waitTime >= 100)
 	{
@@ -419,7 +419,6 @@ void main()
 	uchar soundCount;
 	InitDS1302();
 	InitLcd1602();
-	readTime();
 	showTime();
 	sound = 1;
 	backlight = 0; //打开1602背光
@@ -439,9 +438,8 @@ void main()
 
 	while (1)
 	{
-		
 		setTime();
-		readTime();
+		soundCount = soundRead();
 		/*按下K3，切换到显示温湿度*/
 		if (setFlag == 0)
 		{
@@ -476,11 +474,10 @@ void main()
 					TR0 = 1;
 					timer0Count = 0;
 
-					// readHT();
-					// NPlay(23); // 现在温度是：
-					// NPlayTemp(T);
-					// NPlay(24); // 现在湿度是：
-					// NPlayHumi(H);
+					NPlay(23); // 现在温度是：
+					NPlayTemp(T);
+					NPlay(24); // 现在湿度是：
+					NPlayHumi(H);
 				}
 				while (!K2)
 					;
@@ -489,7 +486,6 @@ void main()
 					;
 			}
 
-			soundCount = soundRead();
 			if (soundCount == 2)
 			{
 				LcdWrite(0x80, '0' + soundCount);
@@ -503,7 +499,7 @@ void main()
 				NPlayTimeHour(hour);
 				NPlayTimeMinute(minute);
 			}
-			 if (soundCount == 3)
+			if (soundCount == 3)
 			{
 				LcdWrite(0x80, '0' + soundCount);
 				backlight = 0;
@@ -518,9 +514,11 @@ void main()
 				NPlayHumi(H);
 			}
 
-			/*根据标记flag判断，双数显示时间，单数显示温湿度*/
+			/*根据标记判断显示时间或温湿度*/
 			if (displayFlag == 0)
+			{
 				showTime();
+			}
 			else
 			{
 				readHT();

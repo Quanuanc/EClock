@@ -7,11 +7,12 @@
 
 uchar second, minute, hour, week, day, month, year, setNum = 0;
 bit displayFlag = 0, setFlag = 0;
-uint timer0Count = 0;	//定时器溢出次数
-sbit backlight = P2 ^ 1; //1602背光灯控制，0-背光开，1-背光关
+uint timer0Count = 0; //定时器溢出次数
 
 uint waitTime = 0;
 uchar soundState = 0;
+
+int H, T;
 
 /*******读取时间函数**********/
 uchar readSecond()
@@ -132,7 +133,7 @@ void showYear()
 }
 void showTime()
 {
-	readTime();
+
 	showSecond();
 	showMinute();
 	showHour();
@@ -141,13 +142,10 @@ void showTime()
 	showYear();
 }
 /*******显示温湿度函数******/
-void showHT()
+void readHT()
 {
-	uchar DHT[4];
-	uchar R_H, R_L, T_H, T_L, RH, RL, TH, TL, revise, H, T;
-
+	uchar R_H, R_L, T_H, T_L, RH, RL, TH, TL, revise;
 	delay_ms(20);
-
 	DHTStart();
 	if (Data == 0)
 	{
@@ -161,7 +159,21 @@ void showHT()
 		revise = DHTByteRead(); //接收校正位
 
 		delay_us(25); //结束
+	}
+	delay_ms(20);
+	DHTStart();
+	if (Data == 0)
+	{
+		while (Data == 0)
+			;					//等待拉高
+		delay_us(40);			//拉高后延时80us
+		R_H = DHTByteRead();	//接收湿度高八位
+		R_L = DHTByteRead();	//接收湿度低八位
+		T_H = DHTByteRead();	//接收温度高八位
+		T_L = DHTByteRead();	//接收温度低八位
+		revise = DHTByteRead(); //接收校正位
 
+		delay_us(25);						   //结束
 		if ((R_H + R_L + T_H + T_L) == revise) //校正
 		{
 			RH = R_H;
@@ -177,15 +189,20 @@ void showHT()
 		// DHT[2] = '0' + (TH / 10);
 		// DHT[3] = '0' + (TH % 10);
 
-		/*DHT21 数据处理，方便显示*/
+		/*DHT21 数据处理*/
 		H = (RH * 256 + RL) / 10; //DHT21湿度数据格式为16bit，并且是实际湿度的10倍
 		T = (TH * 256 + TL) / 10;
-		DHT[0] = '0' + (H / 10);
-		DHT[1] = '0' + (H % 10);
-
-		DHT[2] = '0' + (T / 10);
-		DHT[3] = '0' + (T % 10);
 	}
+}
+
+void showHT()
+{
+	uchar DHT[4];
+	DHT[0] = '0' + (H / 10);
+	DHT[1] = '0' + (H % 10);
+
+	DHT[2] = '0' + (T / 10);
+	DHT[3] = '0' + (T % 10);
 
 	LcdWrite(0x80 + 5, 'H');
 	LcdWrite(0x80 + 6, ':');
@@ -367,34 +384,34 @@ void setTime()
 }
 
 /******检测声音响多少次*********/
-// uchar soundRead()
-// {
-// 	uchar soundStateTemp = 0;
-// 	if (sound == 0)
-// 	{
-// 		delay_ms(5);
-// 		if (sound == 0)
-// 		{
-// 			while (sound == 0)
-// 				;
-// 			waitTime = 0;
-// 			soundState++;
-// 			LcdWrite(0x80+1,'0'+soundState);
-// 		}
-// 		while (!sound)
-// 			;
-// 		delay_ms(5);
-// 		while (!sound)
-// 			;
-// 	}
-// 	if (waitTime >= 100)
-// 	{
-// 		waitTime = 0;
-// 		soundStateTemp = soundState;
-// 		soundState = 0;
-// 	}
-// 	return soundStateTemp;
-// }
+uchar soundRead()
+{
+	uchar soundStateTemp = 0;
+	if (sound == 0)
+	{
+		delay_ms(1);
+		if (sound == 0)
+		{
+			while (sound == 0)
+				;
+			waitTime = 0;
+			soundState++;
+			LcdWrite(0x80 + 15, '0' + soundState);
+		}
+		while (!sound)
+			;
+		delay_ms(1);
+		while (!sound)
+			;
+	}
+	if (waitTime >= 100)
+	{
+		waitTime = 0;
+		soundStateTemp = soundState;
+		soundState = 0;
+	}
+	return soundStateTemp;
+}
 
 /*************主函数****************/
 void main()
@@ -402,7 +419,9 @@ void main()
 	uchar soundCount;
 	InitDS1302();
 	InitLcd1602();
+	readTime();
 	showTime();
+	sound = 1;
 	backlight = 0; //打开1602背光
 
 	TMOD = 0x11;
@@ -413,34 +432,16 @@ void main()
 	ET0 = 1;
 	TR0 = 1;
 
-	// TH1 = (65536 - 9216) / 256;
-	// TL1 = (65536 - 9216) % 256;
-	// ET1 = 1;
-	// TR1 = 1;
+	TH1 = (65536 - 9216) / 256;
+	TL1 = (65536 - 9216) % 256;
+	ET1 = 1;
+	TR1 = 1;
 
 	while (1)
 	{
+		
 		setTime();
-		// soundCount = soundRead();
-		// if (soundCount == 2)
-		// {
-		// 	LcdWrite(0x80, '0' + soundCount);
-		// 	backlight = 0;
-		// 	TH0 = 0x4C;
-		// 	TL0 = 0x00;
-		// 	TR0 = 1;
-		// 	timer0Count = 0;
-		// }
-		// else if (soundCount == 3)
-		// {
-		// 	LcdWrite(0x80, '0' + soundCount);
-		// 	backlight = 0;
-		// 	TH0 = 0x4C;
-		// 	TL0 = 0x00;
-		// 	TR0 = 1;
-		// 	timer0Count = 0;
-		// }
-
+		readTime();
 		/*按下K3，切换到显示温湿度*/
 		if (setFlag == 0)
 		{
@@ -474,9 +475,12 @@ void main()
 					TL0 = 0x00;
 					TR0 = 1;
 					timer0Count = 0;
-					NPlay(22);				 // 现在时刻北京时间：
-					NPlayTimeHour(hour);	 //播报时
-					NPlayTimeMinute(minute); //播报分
+
+					// readHT();
+					// NPlay(23); // 现在温度是：
+					// NPlayTemp(T);
+					// NPlay(24); // 现在湿度是：
+					// NPlayHumi(H);
 				}
 				while (!K2)
 					;
@@ -485,11 +489,43 @@ void main()
 					;
 			}
 
+			soundCount = soundRead();
+			if (soundCount == 2)
+			{
+				LcdWrite(0x80, '0' + soundCount);
+				backlight = 0;
+				TH0 = 0x4C;
+				TL0 = 0x00;
+				TR0 = 1;
+				timer0Count = 0;
+
+				NPlay(22); //现在时刻北京时间
+				NPlayTimeHour(hour);
+				NPlayTimeMinute(minute);
+			}
+			 if (soundCount == 3)
+			{
+				LcdWrite(0x80, '0' + soundCount);
+				backlight = 0;
+				TH0 = 0x4C;
+				TL0 = 0x00;
+				TR0 = 1;
+				timer0Count = 0;
+
+				NPlay(23); // 现在温度是：
+				NPlayTemp(T);
+				NPlay(24); // 现在湿度是：
+				NPlayHumi(H);
+			}
+
 			/*根据标记flag判断，双数显示时间，单数显示温湿度*/
 			if (displayFlag == 0)
 				showTime();
 			else
+			{
+				readHT();
 				showHT();
+			}
 		}
 	}
 }
@@ -501,14 +537,16 @@ void Timer0() interrupt 1
 	timer0Count++;
 	if (timer0Count == 400)
 	{
+		LcdWrite(0x80, ' ');
+		LcdWrite(0x80 + 15, ' ');
 		backlight = 1;
 		timer0Count = 0;
 	}
 }
 
-// void Timer1() interrupt 3
-// {
-// 	TH1 = (65536 - 9216) / 256;
-// 	TL1 = (65536 - 9216) % 256;
-// 	waitTime++;
-// }
+void Timer1() interrupt 3
+{
+	TH1 = (65536 - 9216) / 256;
+	TL1 = (65536 - 9216) % 256;
+	waitTime++;
+}

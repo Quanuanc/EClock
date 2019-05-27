@@ -91,19 +91,109 @@ void NPlayTimeMinute(uchar minute)
         switch (ten)
         {
         case 0:
-            NPlay(unit+1);
+            NPlay(unit + 1);
             NPlay(14);
             break;
         case 1:
             NPlay(11);
-            NPlay(unit+1);
+            NPlay(unit + 1);
             NPlay(14);
             break;
         default:
             NPlay(ten + 1);
             NPlay(11);
-            NPlay(unit+1);
+            NPlay(unit + 1);
             NPlay(14);
+        }
+    }
+}
+
+void NPlayTemp(int T)
+{
+    uchar ten, unit;
+    ten = T / 10;
+    unit = T % 10;
+    if (unit == 0)
+    {
+        switch (ten)
+        {
+        case 0:
+            NPlay(1);
+            NPlay(20);
+            break;
+        case 1:
+            NPlay(11);
+            NPlay(20);
+            break;
+        default:
+            NPlay(ten + 1);
+            NPlay(11);
+            NPlay(20);
+        }
+    }
+    else
+    {
+        switch (ten)
+        {
+        case 0:
+            NPlay(unit + 1);
+            NPlay(20);
+            break;
+        case 1:
+            NPlay(11);
+            NPlay(unit + 1);
+            NPlay(20);
+            break;
+        default:
+            NPlay(ten + 1);
+            NPlay(11);
+            NPlay(unit + 1);
+            NPlay(20);
+        }
+    }
+}
+
+void NPlayHumi(int H)
+{
+    uchar ten, unit;
+    ten = H / 10;
+    unit = H % 10;
+    if (unit == 0)
+    {
+        switch (ten)
+        {
+        case 0:
+            NPlay(21); //百分之
+            NPlay(1);
+            break;
+        case 1:
+            NPlay(21); //百分之
+            NPlay(11);
+            break;
+        default:
+            NPlay(21); //百分之
+            NPlay(ten + 1);
+            NPlay(11);
+        }
+    }
+    else
+    {
+        switch (ten)
+        {
+        case 0:
+            NPlay(21); //百分之
+            NPlay(unit + 1);
+            break;
+        case 1:
+            NPlay(21); //百分之
+            NPlay(11);
+            NPlay(unit + 1);
+            break;
+        default:
+            NPlay(21); //百分之
+            NPlay(ten + 1);
+            NPlay(11);
+            NPlay(unit + 1);
         }
     }
 }

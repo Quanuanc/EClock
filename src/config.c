@@ -16,20 +16,7 @@ void delay_ms(uint z)
 
 void configTimer0() //初始化计数器，定时50ms
 {
-	TMOD = 0x01;
 	TH0 = 0x4C;
 	TL0 = 0x00;
-	EA = 1;
-	ET0 = 1;
 	TR0 = 1;
 }
-
-// void configTimer1() //初始化计数器，定时50ms
-// {
-// 	TMOD = 0x01;
-// 	TH1 = 0x4C;
-// 	TL1 = 0x00;
-// 	EA = 1;
-// 	ET1 = 1;
-// 	TR1 = 1;
-// }

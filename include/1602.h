@@ -9,6 +9,7 @@
 sbit LCD1602_RS = P2^5;
 sbit LCD1602_RW = P2^6;
 sbit LCD1602_E = P2^7;
+sbit backlight = P2 ^ 1;  //1602背光灯控制，0-背光开，1-背光关
 
 #define LCD1602_DB P0
 

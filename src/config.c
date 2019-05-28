@@ -16,7 +16,14 @@ void delay_ms(uint z)
 
 void configTimer0() //初始化计数器，定时50ms
 {
-	TH0 = 0x4C;
-	TL0 = 0x00;
-	TR0 = 1;
+    TH0 = 0x4C;
+    TL0 = 0x00;
+    TR0 = 1;
+}
+
+void configTimer1()
+{
+    TH1 = 0x00;
+    TL1 = 0x00;
+    TR1 = 1;
 }

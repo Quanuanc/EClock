@@ -4,6 +4,7 @@
 #include "include/DHT.h"
 #include "include/key.h"
 #include "include/ny3p.h"
+#include "include/IR.h"
 
 uint backlightTime = 0;											//背光灯等待关闭时间
 uchar showHTTime = 0;											//每2s测量一次温湿度
@@ -14,7 +15,59 @@ uchar RH, RL, TH, TL, revise, H, T, H_L, T_L;					//温湿度处理过程中的�
 uchar soundWaitTime = 0;										//检测声音等待时间
 uchar soundState = 0;											//声音次数
 uchar soundNum = 0;												//声音次数临时变量
-// uchar testSound = 0;
+// uchar testSound = 0;											//测试声音传感器
+
+uchar irTime;
+bit irOK, irProcess;
+uchar irRecTime[33];
+uchar irData[4];
+uchar IRKey = 0;
+
+/*************红外码值处理***************/
+void IRTimeToData(void)
+{
+	uchar i, j, k;
+	uchar cord, value;
+
+	k = 1;
+	for (i = 0; i < 4; i++) //处理4个字节
+	{
+		for (j = 1; j <= 8; j++) //处理1个字节8位
+		{
+			cord = irRecTime[k];
+			if (cord > 7) //大于某值为1，这个和晶振有绝对关系，这里使用12M计算，此值可以有一定误差
+				value |= 0x80;
+			if (j < 8)
+			{
+				value >>= 1;
+			}
+			k++;
+		}
+		irData[i] = value;
+		value = 0;
+	}
+	irProcess = 1; //处理完毕标志位置1
+}
+
+void IRDataToKey(void) //红外键值散转程序
+{
+	switch (irData[2]) //判断第三个数码值
+	{
+	case 0x0c:
+		IRKey = 1;
+		break;
+	case 0x18:
+		IRKey = 2;
+		break;
+	case 0x5e:
+		IRKey = 3;
+		break;
+	default:
+		break;
+	}
+
+	irProcess = 0; //处理完成标志
+}
 
 /*******读取时间函数**********/
 uchar readSecond()
@@ -371,26 +424,85 @@ uchar soundRead()
 	return soundCountTemp;
 }
 
-/**************************************主函数****************************************/
+/******************************************主函数************************************************/
 void main()
 {
 	InitDS1302();
 	InitLcd1602();
-	//初始化语音IC
 	showTime();
+	//此处应初始化语音IC
 	backlight = 0;
 
-	TMOD = 0x01;
-	EA = 1;
-	ET0 = 1;
+	TMOD = 0x21;
+	EA = 1;  //总中断
+	ET0 = 1; //定时器0中断
+	ET1 = 1; //定时器1中断
+
+	IT1 = 1;
+	EX1 = 1;
 	configTimer0();
+	configTimer1();
 
 	while (1)
 	{
 		setTime();
+		if (irOK)
+		{
+			IRTimeToData();
+			irOK = 0;
+		}
+		if (irProcess)
+		{
+			IRDataToKey();
+		}
 
+		/****************不在设置时间界面时***************/
 		if (setFlag == 0)
 		{
+			/********根据遥控的1，2，3键，实现不同功能********/
+			// switch (IRKey)
+			// {
+			// case 1:
+			// 	IRKey = 0;
+			// 	backlight = 0;
+			// 	configTimer0();
+			// 	backlightTime = 0;
+
+			// 	NPlay(22);				 // 现在时刻北京时间：
+			// 	NPlayTimeHour(hour);	 //播报时
+			// 	NPlayTimeMinute(minute); //播报分
+			// 	break;
+			// case 2:
+			// 	IRKey = 0;
+			// 	backlight = 0;
+			// 	configTimer0();
+			// 	backlightTime = 0;
+
+			// 	NPlay(23); //现在温度是：
+			// 	NPlayTemp(T, T_L);
+			// 	NPlay(24); //现在湿度是：
+			// 	NPlayHumi(H, H_L);
+			// 	break;
+			// case 3:
+			// 	IRKey = 0;
+			// 	backlight = 0;
+			// 	configTimer0();
+			// 	backlightTime = 0;
+
+			// 	LcdWriteCmd(0x01);
+			// 	displayFlag = ~displayFlag;
+			// 	break;
+			// }
+			if (IRKey == 3)
+			{
+				IRKey = 0;
+				backlight = 0;
+				configTimer0();
+				backlightTime = 0;
+
+				LcdWriteCmd(0x01);
+				displayFlag = ~displayFlag;
+			}
 			/****************按下K3，切换到显示温湿度******************/
 			if (K3 == 0)
 			{
@@ -446,6 +558,17 @@ void main()
 					while (!K2)
 						;
 				}
+				if (IRKey == 2)
+				{
+					IRKey = 0;
+					backlight = 0;
+					configTimer0();
+					backlightTime = 0;
+					LcdWrite(0x80, 'T');
+					NPlay(22);				 // 现在时刻北京时间：
+					NPlayTimeHour(hour);	 //播报时
+					NPlayTimeMinute(minute); //播报分
+				}
 			}
 			else if (displayFlag == 1)
 			{
@@ -471,12 +594,24 @@ void main()
 					while (!K2)
 						;
 				}
+				if (IRKey == 2)
+				{
+					IRKey = 0;
+					backlight = 0;
+					configTimer0();
+					backlightTime = 0;
+					LcdWrite(0x80, 'H');
+					NPlay(23); //现在温度是：
+					NPlayTemp(T, T_L);
+					NPlay(24); //现在湿度是：
+					NPlayHumi(H, H_L);
+				}
 			}
 		}
 	}
 }
 
-void Backlight() interrupt 1
+void Timer0() interrupt 1
 {
 	TH0 = 0x4C;
 	TL0 = 0x00;
@@ -487,16 +622,47 @@ void Backlight() interrupt 1
 	{
 		showHTTime = 0;
 	}
-	if (backlightTime == 600)
+	if (backlightTime == 200)
 	{
 		displayFlag = 0;
 	}
-	if (backlightTime == 1200) //backlightTime 为100时，背光灯时间5s
+	if (backlightTime == 400) //backlightTime 为100时，背光灯时间5s
 	{
 		// testSound = 0;
 		// LcdWrite(0x80 + 15, ' ');
 		// LcdWrite(0x80, ' ');
 		backlight = 1;
 		backlightTime = 0;
+	}
+}
+
+void Timer1() interrupt 3
+{
+	irTime++;
+}
+
+/************ 外部中断处理***********/
+void EX1IR(void) interrupt 2 //外部中断0服务函数
+{
+	static uchar i;		  //接收红外信号处理
+	static bit startflag; //是否开始处理标志位
+
+	if (startflag)
+	{
+		if (irTime < 63 && irTime >= 33) //引导码 TC9012的头码，9ms+4.5ms
+			i = 0;
+		irRecTime[i] = irTime; //存储每个电平的持续时间，用于以后判断是0还是1
+		irTime = 0;
+		i++;
+		if (i == 33)
+		{
+			irOK = 1;
+			i = 0;
+		}
+	}
+	else
+	{
+		irTime = 0;
+		startflag = 1;
 	}
 }

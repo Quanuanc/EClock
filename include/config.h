@@ -10,5 +10,6 @@
 void delay_us(uchar n);
 void delay_ms(uint z);
 void configTimer0();
+void configTimer1();
 
 #endif

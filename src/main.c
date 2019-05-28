@@ -9,12 +9,12 @@ uint timer0Count = 0;											//定时器溢出次数
 sbit sound = P2 ^ 0;											//声音传感器，0-检测到声音，1-未检测到
 uchar second, minute, hour, week, day, month, year, setNum = 0; //时间变量
 bit displayFlag = 0, setFlag = 0;								//切换显示标志，设置时间标志
-uchar DHT[4];													//用以显示的温湿度数值
-uchar RH, RL, TH, TL, revise, H, T;								//温湿度处理过程中的变量
+uchar RH, RL, TH, TL, revise, H, T, H_L, T_L;					//温湿度处理过程中的变量
 
-uchar soundWaitTime = 0, testSound = 0; //检测声音等待时间
-uchar soundState = 0;					//声音次数
-uchar soundNum = 0;						//声音次数临时变量
+uchar soundWaitTime = 0;
+// uchar testSound = 0; //检测声音等待时间
+uchar soundState = 0; //声音次数
+uchar soundNum = 0;   //声音次数临时变量
 
 /*******读取时间函数**********/
 uchar readSecond()
@@ -146,6 +146,7 @@ void showTime()
 /*******显示温湿度函数******/
 void showHT()
 {
+	//uchar H_L, T_L;
 	delay_ms(20);
 	DHTStart();
 	if (Data == 0)
@@ -161,36 +162,27 @@ void showHT()
 		delay_us(25);					   //结束
 		if ((RH + RL + TH + TL) == revise) //校正
 		{
-			H = (RH * 256 + RL) / 10; //DHT21湿度数据格式为16bit，并且是实际湿度的10倍
+			H = (RH * 256 + RL) / 10;   //DHT21湿度数据格式为16bit，并且是实际湿度的10倍
+			H_L = (RH * 256 + RL) % 10; //湿度小数点部分
 			T = (TH * 256 + TL) / 10;
-			DHT[0] = '0' + (H / 10);
-			DHT[1] = '0' + (H % 10);
-
-			DHT[2] = '0' + (T / 10);
-			DHT[3] = '0' + (T % 10);
+			T_L = (TH * 256 + TL) % 10; //温度小数点部分
 		}
-		/*DHT11 数据处理，方便显示*/
-		// DHT[0] = '0' + (RH / 10);
-		// DHT[1] = '0' + (RH % 10);
-
-		// DHT[2] = '0' + (TH / 10);
-		// DHT[3] = '0' + (TH % 10);
-
-		/*DHT21 数据处理，方便显示*/
 	}
 
-	LcdWrite(0x80 + 5, 'H');
-	LcdWrite(0x80 + 6, ':');
-	LcdWrite(0x80 + 0x40 + 5, 'T');
-	LcdWrite(0x80 + 0x40 + 6, ':');
+	LcdWrite(0x80 + 4, 'H');
+	LcdWrite(0x80 + 5, ':');
+	LcdWrite(0x80 + 7, '0' + (H / 10));
+	LcdWrite(0x80 + 8, '0' + (H % 10));
+	LcdWrite(0x80 + 9, '.');
+	LcdWrite(0x80 + 10, '0' + H_L);
+	LcdWrite(0x80 + 11, '%');
 
-	LcdWrite(0x80 + 8, DHT[0]);
-	LcdWrite(0x80 + 9, DHT[1]);
-	LcdWrite(0x80 + 10, '%');
-
-	LcdWrite(0x80 + 0x40 + 8, DHT[2]);
-	LcdWrite(0x80 + 0x40 + 9, DHT[3]);
-	LcdWrite(0x80 + 0x40 + 10, 0xdf); //显示符号°
+	LcdWrite(0x80 + 0x40 + 4, 'T');
+	LcdWrite(0x80 + 0x40 + 5, ':');
+	LcdWrite(0x80 + 0x40 + 7, '0' + (T / 10));
+	LcdWrite(0x80 + 0x40 + 8, '0' + (T % 10));
+	LcdWrite(0x80 + 0x40 + 9, '.');
+	LcdWrite(0x80 + 0x40 + 10, '0' + T_L);
 	LcdWrite(0x80 + 0x40 + 11, 'C');
 }
 /***********键盘扫描函数*************/
@@ -365,7 +357,7 @@ uchar soundRead()
 		{
 			while (sound == 0)
 				;
-			testSound++;
+			// testSound++;
 			soundWaitTime = 0;
 			soundNum++;
 		}
@@ -439,10 +431,10 @@ void main()
 			}
 
 			soundState = soundRead();
-			LcdWrite(0x80, ' ' + testSound);
-			if (soundState >= 2)
+			// LcdWrite(0x80, ' ' + testSound);
+			if (soundState >= 2 && soundState < 4)
 			{
-				LcdWrite(0x80 + 15, 'T');
+				// LcdWrite(0x80 + 15, 'T');
 				backlight = 0;
 				configTimer0();
 				timer0Count = 0;
@@ -472,8 +464,9 @@ void Backlight() interrupt 1
 	timer0Count++;
 	if (timer0Count == 300) //Timer0Count为100时，背光灯时间5s
 	{
-		testSound = 0;
-		LcdWrite(0x80 + 15, ' ');
+		// testSound = 0;
+		// LcdWrite(0x80 + 15, ' ');
+		// LcdWrite(0x80, ' ');
 		backlight = 1;
 		timer0Count = 0;
 		displayFlag = 0;

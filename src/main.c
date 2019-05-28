@@ -53,9 +53,6 @@ void IRDataToKey(void) //红外键值散转程序
 {
 	switch (irData[2]) //判断第三个数码值
 	{
-	case 0x0c:
-		IRKey = 1;
-		break;
 	case 0x18:
 		IRKey = 2;
 		break;
@@ -459,40 +456,7 @@ void main()
 		/****************不在设置时间界面时***************/
 		if (setFlag == 0)
 		{
-			/********根据遥控的1，2，3键，实现不同功能********/
-			// switch (IRKey)
-			// {
-			// case 1:
-			// 	IRKey = 0;
-			// 	backlight = 0;
-			// 	configTimer0();
-			// 	backlightTime = 0;
-
-			// 	NPlay(22);				 // 现在时刻北京时间：
-			// 	NPlayTimeHour(hour);	 //播报时
-			// 	NPlayTimeMinute(minute); //播报分
-			// 	break;
-			// case 2:
-			// 	IRKey = 0;
-			// 	backlight = 0;
-			// 	configTimer0();
-			// 	backlightTime = 0;
-
-			// 	NPlay(23); //现在温度是：
-			// 	NPlayTemp(T, T_L);
-			// 	NPlay(24); //现在湿度是：
-			// 	NPlayHumi(H, H_L);
-			// 	break;
-			// case 3:
-			// 	IRKey = 0;
-			// 	backlight = 0;
-			// 	configTimer0();
-			// 	backlightTime = 0;
-
-			// 	LcdWriteCmd(0x01);
-			// 	displayFlag = ~displayFlag;
-			// 	break;
-			// }
+			/***********按下遥控器3键，切换显示****************/
 			if (IRKey == 3)
 			{
 				IRKey = 0;
@@ -503,7 +467,7 @@ void main()
 				LcdWriteCmd(0x01);
 				displayFlag = ~displayFlag;
 			}
-			/****************按下K3，切换到显示温湿度******************/
+			/****************按下K3，切换到显示******************/
 			if (K3 == 0)
 			{
 				delay_ms(10);
@@ -564,7 +528,7 @@ void main()
 					backlight = 0;
 					configTimer0();
 					backlightTime = 0;
-					LcdWrite(0x80, 'T');
+					//LcdWrite(0x80, 'T');
 					NPlay(22);				 // 现在时刻北京时间：
 					NPlayTimeHour(hour);	 //播报时
 					NPlayTimeMinute(minute); //播报分
@@ -600,7 +564,7 @@ void main()
 					backlight = 0;
 					configTimer0();
 					backlightTime = 0;
-					LcdWrite(0x80, 'H');
+					//LcdWrite(0x80, 'H');
 					NPlay(23); //现在温度是：
 					NPlayTemp(T, T_L);
 					NPlay(24); //现在湿度是：

@@ -5,16 +5,16 @@
 #include "include/key.h"
 #include "include/ny3p.h"
 
-uint timer0Count = 0;											//定时器溢出次数
+uint backlightTime = 0;											//背光灯等待关闭时间
+uchar showHTTime = 0;											//每2s测量一次温湿度
 sbit sound = P2 ^ 0;											//声音传感器，0-检测到声音，1-未检测到
 uchar second, minute, hour, week, day, month, year, setNum = 0; //时间变量
 bit displayFlag = 0, setFlag = 0;								//切换显示标志，设置时间标志
 uchar RH, RL, TH, TL, revise, H, T, H_L, T_L;					//温湿度处理过程中的变量
-
-uchar soundWaitTime = 0;
-// uchar testSound = 0; //检测声音等待时间
-uchar soundState = 0; //声音次数
-uchar soundNum = 0;   //声音次数临时变量
+uchar soundWaitTime = 0;										//检测声音等待时间
+uchar soundState = 0;											//声音次数
+uchar soundNum = 0;												//声音次数临时变量
+// uchar testSound = 0;
 
 /*******读取时间函数**********/
 uchar readSecond()
@@ -146,7 +146,6 @@ void showTime()
 /*******显示温湿度函数******/
 void showHT()
 {
-	//uchar H_L, T_L;
 	delay_ms(20);
 	DHTStart();
 	if (Data == 0)
@@ -195,7 +194,7 @@ void setTime()
 		{
 			backlight = 0;
 			configTimer0();
-			timer0Count = 0;
+			backlightTime = 0;
 			setNum++;
 
 			switch (setNum)
@@ -400,7 +399,7 @@ void main()
 				{
 					backlight = 0;
 					configTimer0();
-					timer0Count = 0;
+					backlightTime = 0;
 					displayFlag = ~displayFlag;
 					LcdWriteCmd(0x01);
 				}
@@ -410,26 +409,7 @@ void main()
 				while (!K3)
 					;
 			}
-			/*******************按下K2，播报时间**********************/
-			if (K2 == 0)
-			{
-				delay_ms(10);
-				if (K2 == 0)
-				{
-					backlight = 0;
-					configTimer0();
-					timer0Count = 0;
-					NPlay(22);				 // 现在时刻北京时间：
-					NPlayTimeHour(hour);	 //播报时
-					NPlayTimeMinute(minute); //播报分
-				}
-				while (!K2)
-					;
-				delay_ms(10);
-				while (!K2)
-					;
-			}
-
+			/****************响两声，唤醒并播报时间**********/
 			soundState = soundRead();
 			// LcdWrite(0x80, ' ' + testSound);
 			if (soundState >= 2 && soundState < 4)
@@ -437,20 +417,60 @@ void main()
 				// LcdWrite(0x80 + 15, 'T');
 				backlight = 0;
 				configTimer0();
-				timer0Count = 0;
+				backlightTime = 0;
 				NPlay(22);				 // 现在时刻北京时间：
 				NPlayTimeHour(hour);	 //播报时
 				NPlayTimeMinute(minute); //播报分
 			}
 
-			/*****************根据标记flag判断，双数显示时间，单数显示温湿度*************/
+			/*****************根据标记flag判断，0显示时间，1显示温湿度*************/
 			if (displayFlag == 0)
 			{
 				showTime();
+				/*******************按下K2，播报时间**********************/
+				if (K2 == 0)
+				{
+					delay_ms(10);
+					if (K2 == 0)
+					{
+						backlight = 0;
+						configTimer0();
+						backlightTime = 0;
+						NPlay(22);				 // 现在时刻北京时间：
+						NPlayTimeHour(hour);	 //播报时
+						NPlayTimeMinute(minute); //播报分
+					}
+					while (!K2)
+						;
+					delay_ms(10);
+					while (!K2)
+						;
+				}
 			}
 			else if (displayFlag == 1)
 			{
-				showHT();
+				if (showHTTime == 34)
+					showHT();
+				/****************按下K2，播报温湿度***********************/
+				if (K2 == 0)
+				{
+					delay_ms(10);
+					if (K2 == 0)
+					{
+						backlight = 0;
+						configTimer0();
+						backlightTime = 0;
+						NPlay(23); //现在温度是：
+						NPlayTemp(T, T_L);
+						NPlay(24); //现在湿度是：
+						NPlayHumi(H, H_L);
+					}
+					while (!K2)
+						;
+					delay_ms(10);
+					while (!K2)
+						;
+				}
 			}
 		}
 	}
@@ -460,15 +480,23 @@ void Backlight() interrupt 1
 {
 	TH0 = 0x4C;
 	TL0 = 0x00;
-	soundWaitTime++;
-	timer0Count++;
-	if (timer0Count == 300) //Timer0Count为100时，背光灯时间5s
+	soundWaitTime++; //声音检测等待时间
+	backlightTime++; //背光灯等待关闭时间
+	showHTTime++;
+	if (showHTTime == 35)
+	{
+		showHTTime = 0;
+	}
+	if (backlightTime == 600)
+	{
+		displayFlag = 0;
+	}
+	if (backlightTime == 1200) //backlightTime 为100时，背光灯时间5s
 	{
 		// testSound = 0;
 		// LcdWrite(0x80 + 15, ' ');
 		// LcdWrite(0x80, ' ');
 		backlight = 1;
-		timer0Count = 0;
-		displayFlag = 0;
+		backlightTime = 0;
 	}
 }

@@ -9,6 +9,7 @@
 
 void delay_us(uchar n);
 void delay_ms(uint z);
+// void Delay80us();
 void configTimer0();
 void configTimer1();
 

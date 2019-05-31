@@ -1,6 +1,6 @@
 #include "include/config.h"
 
-void delay_us(uchar n)
+void delay_us(uchar n) //延时 2*n+2 us
 {
     while (--n)
         ;
@@ -13,6 +13,15 @@ void delay_ms(uint z)
         for (j = 110; j > 0; j--)
             ;
 }
+
+// void Delay80us()		//@11.0592MHz
+// {
+// 	unsigned char i;
+
+// 	i = 34;
+// 	while (--i);
+// }
+
 
 void configTimer0() //初始化计数器，定时50ms
 {

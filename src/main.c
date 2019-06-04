@@ -6,9 +6,10 @@
 #include "include/ny3p.h"
 #include "include/IR.h"
 
+sbit sound = P2 ^ 0; //声音传感器，0-检测到声音，1-未检测到
+
 uint backlightTime = 0;											//背光灯等待关闭时间
-uchar showHTTime = 0;											//每2s测量一次温湿度
-sbit sound = P2 ^ 0;											//声音传感器，0-检测到声音，1-未检测到
+uint showHTTime = 0;											//每2s测量一次温湿度
 uchar second, minute, hour, week, day, month, year, setNum = 0; //时间变量
 bit displayFlag = 0, setFlag = 0;								//切换显示标志，设置时间标志
 uchar RH, RL, TH, TL, revise, H, T, H_L, T_L;					//温湿度处理过程中的变量
@@ -17,11 +18,11 @@ uchar soundState = 0;											//声音次数
 uchar soundNum = 0;												//声音次数临时变量
 // uchar testSound = 0;											//测试声音传感器
 
-uchar irTime;
-bit irOK, irProcess;
-uchar irRecTime[33];
-uchar irData[4];
-uchar IRKey = 0;
+uchar irTime;		 //记录高低电平时间
+bit irOK, irProcess; //接收完毕，处理完毕
+uchar irRecTime[33]; //储存高低电平时间数组
+uchar irData[4];	 //存储4字节的红外码
+uchar IRKey = 0;	 //按键值，由键码转换而来
 
 /*************红外码值处理***************/
 void IRTimeToData(void)
@@ -202,8 +203,8 @@ void readHT()
 	if (Data == 0)
 	{
 		while (Data == 0)
-			; //等待拉高
-		delay_us(39);					   //拉高后延时80us
+			;		  //等待拉高
+		delay_us(39); //拉高后延时80us
 		//Delay80us();
 		RH = DHTByteRead();				   //接收湿度高八位
 		RL = DHTByteRead();				   //接收湿度低八位
@@ -436,6 +437,10 @@ void main()
 	InitDS1302();
 	InitLcd1602();
 	showTime();
+
+	N_rst = 0;  //语音IC复位脚，防止刚开机时启动语音播报错误
+	N_data = 0; //语音IC数据脚
+
 	backlight = 0;
 
 	TMOD = 0x21;
@@ -460,7 +465,12 @@ void main()
 		{
 			IRDataToKey();
 		}
-
+		/************按下遥控器1键，常亮*************/
+		if (IRKey == 1)
+		{
+			backlight = 0;
+			TR0 = ~TR0;
+		}
 		/****************不在设置时间界面时***************/
 		if (setFlag == 0)
 		{
@@ -545,7 +555,7 @@ void main()
 			else if (displayFlag == 1)
 			{
 				showHT();
-				if (showHTTime == 35)
+				if (showHTTime == 0)
 					readHT();
 				/****************按下K2，播报温湿度***********************/
 				if (K2 == 0)
@@ -590,7 +600,6 @@ void Timer0() interrupt 1
 	TL0 = 0x00;
 	backlightTime++; //背光灯等待关闭时间
 	showHTTime++;	//温湿度读取刷新间隔
-
 	if (showHTTime > 35)
 	{
 		showHTTime = 0;
@@ -614,8 +623,8 @@ void Timer0() interrupt 1
 
 void Timer1() interrupt 3
 {
-	irTime++;
 	soundWaitTime++; //声音检测等待时间
+	irTime++;
 }
 
 /************ 外部中断处理***********/

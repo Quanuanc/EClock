@@ -9,9 +9,9 @@ void NPlay(uchar n)
     while (n > 0)
     {
         N_data = 1;
-        delay_us(100);
+        delay_us(500);
         N_data = 0;
-        delay_us(100);
+        delay_us(500);
         n--;
     }
     while (N_busy != 1)

@@ -12,6 +12,8 @@ sbit N_rst = P2^4;
 void NPlay(uchar n);
 void NPlayTimeHour(uchar hour);
 void NPlayTimeMinute(uchar minute);
+void NPlayTemp(uchar T, uchar T_L);
+void NPlayHumi(uchar H, uchar H_L);
 
 void NPlayTemp(int H);
 void NPlayHumi(int H);

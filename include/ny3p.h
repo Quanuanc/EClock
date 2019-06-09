@@ -15,7 +15,4 @@ void NPlayTimeMinute(uchar minute);
 void NPlayTemp(uchar T, uchar T_L);
 void NPlayHumi(uchar H, uchar H_L);
 
-void NPlayTemp(int H);
-void NPlayHumi(int H);
-
 #endif

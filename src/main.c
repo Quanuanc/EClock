@@ -3,7 +3,6 @@
 #include "include/1302.h"
 #include "include/DHT.h"
 #include "include/key.h"
-#include "include/sound.h"
 #include "include/ny3p.h"
 #include "include/IR.h"
 
@@ -258,11 +257,6 @@ void setTime()
 			backlightTime = 0;
 			setNum++;
 
-			TH0 = 0x4C;
-			TL0 = 0x00;
-			TR0 = 1;
-			timer0Count = 0;
-
 			switch (setNum)
 			{
 			case 1:
@@ -440,7 +434,6 @@ uchar soundRead()
 /******************************************主函数************************************************/
 void main()
 {
-	uchar soundCount;
 	InitDS1302();
 	InitLcd1602();
 	showTime();
@@ -658,11 +651,4 @@ void EX1IR(void) interrupt 2 //外部中断0服务函数
 		irTime = 0;
 		startflag = 1;
 	}
-}
-
-void Timer1() interrupt 3
-{
-	TH1 = (65536 - 9216) / 256;
-	TL1 = (65536 - 9216) % 256;
-	waitTime++;
 }

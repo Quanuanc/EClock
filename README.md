@@ -1,8 +1,23 @@
 基于STC89C52的电子钟
 ====
-这是一个基于51单片机的电子钟<br/>
+> 这是一个基于51单片机的电子钟<br/>
+
+## 硬件
+
+### 原理图
+
+![Schematic](./extras/images/Schematic.png)
+
+### PCB
+
+![Schematic](extras/images/PCB.png)
+
+
+
 ## 上手指南
-以下指南将帮助你如何运行本项目
+
+> 以下指南将帮助你如何运行本项目
+
 ### 安装要求
 1. Windows系统
 2. 安装Keil C51 uVision5
